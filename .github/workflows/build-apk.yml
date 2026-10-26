@@ -1,4 +1,4 @@
-name: Build Signed Eta-por APK
+name: Build Eta-por Test APK
 on:
   push:
     branches: [ main ]
@@ -11,42 +11,29 @@ jobs:
     env:
       PUB_HOSTED_URL: https://pub.flutter-io.cn
       FLUTTER_STORAGE_BASE_URL: https://storage.flutter-io.cn
-    # 重点：指定flutter项目所在子目录
-    defaults:
-      run:
-        working-directory: ./Eta-por
     steps:
-      - name: Checkout source
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0' # ⚠️改成项目真实版本
+          flutter-version: '3.24.0'
           channel: stable
 
-      - name: Decode keystore from base64
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
-
-      - name: Write signing config to local properties
-        run: |
-          cat > android/app/key.properties <<EOF
-          storePassword=${{ secrets.STORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=keystore.jks
-          EOF
-
+      # 👉 手动cd进入子目录，避免working-directory叠加bug
       - name: Flutter pub get
-        run: flutter pub get
+        run: |
+          cd Eta-por
+          flutter pub get
 
-      - name: Build signed release APK
-        run: flutter build apk --release --split-per-abi
+      - name: Build Release APK（无签名）
+        run: |
+          cd Eta-por
+          flutter build apk --release --split-per-abi
 
-      - name: Upload signed APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Eta-por-signed-apk
-          # 产物路径也要对应子目录！！这个很容易忘
+          name: Eta-por-test-apk
           path: Eta-por/build/app/outputs/flutter-apk/*.apk
