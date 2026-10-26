@@ -1,0 +1,31 @@
+name: Build Eta-por APK
+on:
+  push:
+    branches: [ main ] # 改成你实际的主分支，有的是master
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0' # 你项目对应的flutter版本，错了会编译失败
+          channel: 'stable'
+
+      - name: 安装依赖
+        run: flutter pub get
+
+      - name: 编译Release APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: 上传编译产物APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Eta-por-apk
+          path: build/app/outputs/flutter-apk/*.apk
